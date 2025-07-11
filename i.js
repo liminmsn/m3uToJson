@@ -1,9 +1,14 @@
 //node 匹配hls文件
-import { readFile } from 'node:fs';
+import { writeFileSync } from 'fs';
+import { readdir, readFile } from 'fs/promises';
+import path from 'path';
 
-readFile('./tv.m3u', { encoding: 'utf8' }, (err, m3uContent) => {
+const inDir = './m3u';
+const list = await readdir(inDir, { encoding: 'utf8' });
+
+list.forEach(async (file_name, idx) => {
+    const m3uContent = await readFile(inDir.concat('/', file_name), { encoding: 'utf8' });
     const m3uRegex = /#EXTINF:-1\s*(?:,?\s*(tvg-id="[^"]*"))?\s*(?:,?\s*(tvg-name="[^"]*"))?\s*(?:,?\s*(tvg-logo="[^"]*"))?\s*(?:,?\s*(group-title="[^"]*"))?\s*,([^\n]+)\n([^\n#]+)/g;
-
     const channels = [];
     let match;
     while ((match = m3uRegex.exec(m3uContent)) !== null) {
@@ -26,6 +31,6 @@ readFile('./tv.m3u', { encoding: 'utf8' }, (err, m3uContent) => {
             url: url.trim(),
         });
     }
-
-    console.log(channels);
-});
+    writeFileSync(String('./out/').concat(file_name.replaceAll('.m3u', '.json')), JSON.stringify(channels), { encoding: 'utf8' });
+})
+console.log(list);
